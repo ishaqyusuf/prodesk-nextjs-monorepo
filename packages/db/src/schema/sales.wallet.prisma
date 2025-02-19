@@ -1,0 +1,131 @@
+model CustomerTransaction {
+    id            Int                  @unique @default(autoincrement())
+    authorId      Int
+    status        String?
+    amount        Float
+    walletId      Int?
+    paymentMethod String?
+    description   String?              @db.LongText
+    meta          Json?                @db.Json
+    createdAt     DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt     DateTime?            @updatedAt
+    deletedAt     DateTime?            @db.Timestamp(0)
+    wallet        CustomerWallet?      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+    salesPayments SalesPayments[]
+    refundTx      RefundTransactions[]
+    squarePayment SquarePayments?      @relation(fields: [squarePID], references: [id])
+    squarePID     String?
+    author        Users?               @relation(fields: [authorId], references: [id])
+
+    @@index([authorId])
+    @@index([walletId])
+    @@index([squarePID])
+}
+
+model CustomerWallet {
+    id           Int                   @unique @default(autoincrement())
+    balance      Float
+    accountNo    String?               @unique
+    meta         Json?                 @db.Json
+    customer     Customers?            @relation(fields: [id], references: [walletId], onDelete: Cascade)
+    transactions CustomerTransaction[]
+    createdAt    DateTime?             @default(now()) @db.Timestamp(0)
+    updatedAt    DateTime?             @updatedAt
+    deletedAt    DateTime?             @db.Timestamp(0)
+
+    refunds Refunds[]
+}
+
+model SalesPayments {
+    id            Int                  @unique @default(autoincrement())
+    customerId    Int
+    transactionId Int?
+    orderId       Int
+    amount        Float
+    tip           Float?
+    meta          Json?                @db.Json
+    status        String? // success,pending,paid
+    deletedAt     DateTime?            @db.Timestamp(0)
+    createdAt     DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt     DateTime?            @updatedAt
+    order         SalesOrders          @relation(name: "salesPayment", fields: [orderId], references: [id], onDelete: Cascade)
+    checkout      SalesCheckout?
+    customer      Customers            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    transaction   CustomerTransaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+    commissions   SalesCommision[]
+
+    @@index([orderId])
+    @@index([customerId])
+    @@index([transactionId])
+}
+
+model SquarePayments {
+    id              String                @id @default(cuid())
+    paymentId       String?               @unique
+    status          String                @default("created")
+    squareOrderId   String?
+    paymentMethod   String //link,terminal
+    paymentLink     String?
+    amount          Float
+    tip             Float?
+    meta            Json?                 @db.Json
+    deletedAt       DateTime?             @db.Timestamp(0)
+    createdAt       DateTime?             @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime?             @updatedAt
+    terminalId      String?
+    createdById     Int
+    paymentTerminal PaymentTerminals?     @relation(fields: [terminalId], references: [terminalId])
+    customerTxs     CustomerTransaction[]
+    createdBy       Users                 @relation(fields: [createdById], references: [id])
+
+    @@index([terminalId])
+    @@index([createdById])
+}
+
+model PaymentTerminals {
+    terminalId   String    @unique
+    terminalName String
+    deletedAt    DateTime? @db.Timestamp(0)
+    createdAt    DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt    DateTime? @updatedAt
+
+    payments SquarePayments[]
+}
+
+model SalesCheckout {
+    id              String            @id @default(cuid())
+    paymentId       String?           @unique
+    userId          Int?
+    status          String
+    paymentType     String
+    terminalId      String?
+    terminalName    String?
+    amount          Float
+    tip             Float?            @default(0)
+    orderId         Int
+    meta            Json?             @db.Json
+    deletedAt       DateTime?         @db.Timestamp(0)
+    createdAt       DateTime?         @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime?         @updatedAt
+    order           SalesOrders       @relation(fields: [orderId], references: [id])
+    createdBy       Users?            @relation(fields: [userId], references: [id])
+    salesPaymentsId Int?              @unique
+    paymentSlip     SalesPayments?    @relation(fields: [salesPaymentsId], references: [id])
+    tenders         CheckoutTenders[]
+
+    @@index([orderId])
+}
+
+model CheckoutTenders {
+    id              String        @id @default(cuid())
+    tenderId        String
+    squarePaymentId String
+    squareOrderId   String
+    salesCheckoutId String
+    status          String
+    deletedAt       DateTime?     @db.Timestamp(0)
+    createdAt       DateTime?     @default(now()) @db.Timestamp(0)
+    checkout        SalesCheckout @relation(fields: [salesCheckoutId], references: [id])
+
+    @@index([salesCheckoutId])
+}

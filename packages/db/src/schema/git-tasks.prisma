@@ -1,0 +1,47 @@
+model GitTasks {
+    id          Int    @unique @default(autoincrement())
+    description String
+
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+
+    statusList GitTaskStatus[]
+    tags       GitTaskTags[]
+}
+
+model GitTaskStatus {
+    id        Int       @unique @default(autoincrement())
+    current   Boolean   @default(false)
+    status    String
+    taskId    Int
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+    task      GitTasks? @relation(fields: [taskId], references: [id])
+
+    @@index([taskId])
+}
+
+model GitTaskTags {
+    id        Int       @unique @default(autoincrement())
+    tagId     Int
+    gitTaskId Int
+    task      GitTasks? @relation(fields: [gitTaskId], references: [id])
+    tag       Tags?     @relation(fields: [tagId], references: [id])
+    deletedAt DateTime? @db.Timestamp(0)
+
+    @@index([gitTaskId])
+    @@index([tagId])
+}
+
+model Tags {
+    id    Int    @unique @default(autoincrement())
+    title String
+
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+
+    taskTags GitTaskTags[]
+}

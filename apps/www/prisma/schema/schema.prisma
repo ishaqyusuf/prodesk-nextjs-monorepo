@@ -1,0 +1,1042 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["typedSql", "prismaSchemaFolder"]
+    // previewFeatures = ["filteredRelationCount"]
+}
+
+datasource db {
+    provider     = "mysql"
+    relationMode = "prisma"
+    url          = env("DATABASE_URL")
+}
+
+// datasource db {
+//     provider     = "postgres"
+//     relationMode = "prisma"
+//     url          = env("POSTGRESS_URL")
+// }
+
+model AutoCompletes {
+    id        Int       @unique @default(autoincrement())
+    type      String
+    fieldName String
+    deletedAt DateTime?
+    value     String
+}
+
+/// The underlying table does notnpx contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model AddressBooks {
+    id             Int           @unique @default(autoincrement())
+    customerId     Int?
+    name           String?       @db.VarChar(255)
+    address1       String?       @db.VarChar(300)
+    address2       String?       @db.VarChar(300)
+    country        String?       @db.VarChar(255)
+    state          String?       @db.VarChar(255)
+    city           String?       @db.VarChar(255)
+    email          String?       @db.VarChar(255)
+    phoneNo        String?       @db.VarChar(255)
+    phoneNo2       String?       @db.VarChar(255)
+    meta           Json?         @db.Json
+    createdAt      DateTime?     @default(now()) @db.Timestamp(0)
+    updatedAt      DateTime?     @updatedAt
+    deletedAt      DateTime?
+    customer       Customers?    @relation(fields: [customerId], references: [id], name: "addressBooks", onDelete: Cascade)
+    billingOrders  SalesOrders[] @relation(name: "billingAddress")
+    shippingOrders SalesOrders[] @relation(name: "shippingAddress")
+    dealerBilling  DealerAuth[]  @relation(name: "primaryBillingAddress")
+    dealerShipping DealerAuth[]  @relation(name: "primaryShippingAddress")
+
+    @@index([createdAt, deletedAt, name, address1])
+    @@index([customerId])
+    @@index([phoneNo])
+}
+
+model ErrorLog {
+    id          Int            @unique @default(autoincrement())
+    userId      Int
+    title       String?
+    description String?
+    data        String?
+    meta        Json           @db.Json
+    status      String
+    deletedAt   DateTime?      @db.Timestamp(0)
+    createdAt   DateTime?      @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime?      @updatedAt
+    Users       Users          @relation(fields: [userId], references: [id])
+    tags        ErrorLogTags[]
+
+    @@index([userId])
+}
+
+model ErrorLogTags {
+    id         Int       @unique @default(autoincrement())
+    errorLogId Int
+    errorTagId Int
+    errorLog   ErrorLog  @relation(fields: [errorLogId], references: [id])
+    errorTags  ErrorTags @relation(fields: [errorTagId], references: [id])
+    deletedAt  DateTime? @db.Timestamp(0)
+
+    @@index([errorLogId])
+    @@index([errorTagId])
+}
+
+model ErrorTags {
+    id           Int            @unique @default(autoincrement())
+    name         String         @unique
+    errorLogTags ErrorLogTags[]
+    deletedAt    DateTime?      @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Builders {
+    id            Int             @unique @default(autoincrement())
+    name          String?         @db.VarChar(255)
+    slug          String?         @db.VarChar(255)
+    meta          Json?           @db.Json
+    deletedAt     DateTime?       @db.Timestamp(0)
+    createdAt     DateTime?       @default(now()) @db.Timestamp(0)
+    updatedAt     DateTime?       @updatedAt
+    projects      Projects[]
+    homeTemplates HomeTemplates[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model CostCharts {
+    id        Int            @unique @default(autoincrement())
+    parentId  Int?
+    current   Boolean?
+    title     String         @db.VarChar(255)
+    type      String         @db.VarChar(255)
+    model     String         @db.VarChar(255)
+    meta      Json?          @db.Json
+    startDate DateTime       @default(now()) @db.Timestamp(0)
+    endDate   DateTime?      @db.Timestamp(0)
+    deletedAt DateTime?      @db.Timestamp(0)
+    createdAt DateTime?      @default(now()) @db.Timestamp(0)
+    updatedAt DateTime?      @updatedAt
+    template  HomeTemplates? @relation(fields: [parentId], references: [id])
+
+    @@index([parentId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model CommunityModels {
+    id        Int       @unique @default(autoincrement())
+    projectId Int
+    pivotId   Int?
+    modelName String    @db.VarChar(255)
+    meta      Json?     @db.Json
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+    deletedAt DateTime? @db.Timestamp(0)
+
+    slug    String                     @unique @db.VarChar(255)
+    project Projects                   @relation(fields: [projectId], references: [id])
+    homes   Homes[]
+    history CommunityTemplateHistory[]
+    costs   CommunityModelCost[]
+    pivot   CommunityModelPivot?       @relation(fields: [pivotId], references: [id])
+
+    @@index([pivotId])
+    @@index([projectId])
+}
+
+model CommunityTemplateHistory {
+    id                Int              @unique @default(autoincrement())
+    userId            Int
+    meta              Json?            @db.Json
+    createdAt         DateTime?        @default(now()) @db.Timestamp(0)
+    updatedAt         DateTime?        @updatedAt
+    deletedAt         DateTime?        @db.Timestamp(0)
+    model             CommunityModels? @relation(fields: [communityModelsId], references: [id])
+    communityModelsId Int?
+    Users             Users            @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+    @@index([communityModelsId])
+}
+
+model PageView {
+    id           Int       @id @default(autoincrement())
+    url          String
+    group        String?
+    searchParams String?
+    createdAt    DateTime? @default(now()) @db.Timestamp(0)
+    deletedAt    DateTime? @db.Timestamp(0)
+    Users        Users?    @relation(fields: [userId], references: [id])
+    userId       Int?
+
+    @@index([userId])
+}
+
+model Event {
+    id        Int       @id @default(autoincrement())
+    type      String
+    data      Json
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    deletedAt DateTime? @db.Timestamp(0)
+    value     Float?    @default(1)
+    Users     Users?    @relation(fields: [userId], references: [id])
+    userId    Int?
+
+    @@index([userId])
+}
+
+model CommunityModelPivot {
+    id              Int                  @unique @default(autoincrement())
+    model           String               @db.VarChar(255)
+    projectId       Int
+    meta            Json?                @db.Json
+    createdAt       DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime?            @updatedAt
+    deletedAt       DateTime?            @db.Timestamp(0)
+    communityModels CommunityModels[]
+    modelCosts      CommunityModelCost[]
+}
+
+model CommunityModelCost {
+    id               Int                  @unique @default(autoincrement())
+    communityModelId Int?
+    pivotId          Int?
+    current          Boolean?
+    title            String               @db.VarChar(255)
+    type             String               @db.VarChar(255)
+    model            String               @db.VarChar(255)
+    meta             Json?                @db.Json
+    startDate        DateTime             @default(now()) @db.Timestamp(0)
+    endDate          DateTime?            @db.Timestamp(0)
+    createdAt        DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime?            @updatedAt
+    deletedAt        DateTime?            @db.Timestamp(0)
+    community        CommunityModels?     @relation(fields: [communityModelId], references: [id])
+    pivot            CommunityModelPivot? @relation(fields: [pivotId], references: [id])
+
+    @@index([communityModelId])
+    @@index([pivotId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+model Homes {
+    id                  Int              @unique @default(autoincrement())
+    archived            Boolean?
+    projectId           Int
+    builderId           Int?
+    homeTemplateId      Int?
+    communityTemplateId Int?
+    homeKey             String?          @db.VarChar(255)
+    slug                String?          @unique @db.VarChar(255)
+    modelName           String?          @db.VarChar(255)
+    modelNo             String?          @db.VarChar(255)
+    lotBlock            String?          @db.VarChar(255)
+    lot                 String?          @db.VarChar(255)
+    block               String?          @db.VarChar(255)
+    status              String?          @db.VarChar(255)
+    address             String?          @db.VarChar(255)
+    meta                Json?            @db.Json
+    sentToProdAt        DateTime?        @db.Timestamp(0)
+    installedAt         DateTime?        @db.Timestamp(0)
+    deletedAt           DateTime?        @db.Timestamp(0)
+    createdAt           DateTime?        @default(now()) @db.Timestamp(0)
+    updatedAt           DateTime?        @updatedAt
+    search              String?          @db.VarChar(255)
+    punchoutAt          DateTime?        @db.Timestamp(0)
+    installCost         Float?
+    punchoutCost        Float?
+    project             Projects         @relation(fields: [projectId], references: [id])
+    homeTemplate        HomeTemplates?   @relation(fields: [homeTemplateId], references: [id])
+    communityTemplate   CommunityModels? @relation(fields: [communityTemplateId], references: [id])
+    tasks               HomeTasks[]
+    jobs                Jobs[]
+    invoices            Invoices[]
+
+    @@index([createdAt, deletedAt, modelName, search, projectId])
+    @@index([projectId])
+    @@index([homeTemplateId])
+    @@index([communityTemplateId])
+}
+
+model HomeTasks {
+    id                   Int       @unique @default(autoincrement())
+    archived             Boolean?
+    homeId               Int?
+    type                 String?   @db.VarChar(255)
+    taskName             String?   @db.VarChar(255)
+    taskUid              String?   @db.VarChar(255)
+    status               String?   @db.VarChar(255)
+    meta                 Json?     @db.Json
+    producerName         String?   @db.VarChar(255)
+    search               String?   @db.VarChar(255)
+    productionStatus     String?   @db.VarChar(255)
+    checkNo              String?   @db.VarChar(255)
+    projectId            Int?
+    assignedToId         Int?
+    billable             Boolean?
+    produceable          Boolean?
+    installable          Boolean?
+    punchout             Boolean?
+    deco                 Boolean?
+    addon                Boolean?
+    taxCost              Float?
+    amountDue            Float?
+    amountPaid           Float?
+    completedAt          DateTime?
+    jobId                Int?
+    checkDate            DateTime? @db.Timestamp(0)
+    statusDate           DateTime? @db.Timestamp(0)
+    sentToProductionAt   DateTime? @db.Timestamp(0)
+    producedAt           DateTime? @db.Timestamp(0)
+    prodStartedAt        DateTime? @db.Timestamp(0)
+    productionStatusDate DateTime? @db.Timestamp(0)
+    productionDueDate    DateTime? @db.Timestamp(0)
+    deletedAt            DateTime? @db.Timestamp(0)
+    createdAt            DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt            DateTime? @updatedAt
+    home                 Homes?    @relation(fields: [homeId], references: [id])
+    project              Projects? @relation(fields: [projectId], references: [id])
+    job                  Jobs?     @relation(fields: [jobId], references: [id])
+    assignedTo           Users?    @relation(fields: [assignedToId], references: [id])
+
+    @@index([createdAt, deletedAt, produceable, billable, addon, deco, punchout, installable, taskName, projectId, jobId])
+    @@index([homeId], name: "idx_HomeTasks_on_homeId")
+    @@index([projectId])
+    @@index([jobId])
+    @@index([assignedToId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model HomeTemplates {
+    id        Int          @unique @default(autoincrement())
+    builderId Int?
+    slug      String       @unique @db.VarChar(255)
+    modelNo   String?      @db.VarChar(255)
+    modelName String?      @db.VarChar(255)
+    meta      Json?        @db.Json
+    deletedAt DateTime?    @db.Timestamp(0)
+    createdAt DateTime?    @default(now()) @db.Timestamp(0)
+    updatedAt DateTime?    @updatedAt
+    builder   Builders?    @relation(fields: [builderId], references: [id])
+    homes     Homes[]
+    costs     CostCharts[]
+
+    @@index([builderId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+model SalesItemSupply {
+    id               Int              @unique @default(autoincrement())
+    salesOrderItemId Int
+    salesOrderId     Int
+    qty              Int
+    productId        Int?
+    meta             Json?            @db.Json
+    status           String           @db.VarChar(255)
+    location         String?          @db.VarChar(255)
+    supplier         String?
+    putAwayBy        Int?
+    putawayAt        DateTime?        @db.Timestamp(0)
+    deletedAt        DateTime?        @db.Timestamp(0)
+    createdAt        DateTime?        @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime?        @updatedAt
+    unitCost         Float?
+    totalCost        Float?
+    order            SalesOrders      @relation(fields: [salesOrderId], references: [id])
+    item             SalesOrderItems? @relation(fields: [salesOrderItemId], references: [id])
+
+    @@index([salesOrderId])
+    @@index([salesOrderItemId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Inventories {
+    id               Int       @unique @default(autoincrement())
+    qty              Int
+    productId        Int
+    productVariantId Int
+    meta             Json?     @db.Json
+    deletedAt        DateTime? @db.Timestamp(0)
+    createdAt        DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime? @updatedAt
+}
+
+model OrderInventory {
+    id               Int              @unique @default(autoincrement())
+    category         String
+    meta             Json?            @db.Json
+    name             String
+    description      String?
+    price            Float?
+    parentId         Int?
+    // components       OrderInventory[] @relation(name: "ParentChild")
+    // product          OrderInventory?  @relation(name: "ParentChild", fields: [orderInventoryId], references: [id])
+    components       OrderInventory[] @relation(name: "components")
+    product          OrderInventory?  @relation(name: "components", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    createdAt        DateTime?        @default(now()) @db.Timestamp(0)
+    deletedAt        DateTime?        @db.Timestamp(0)
+    updatedAt        DateTime?        @updatedAt
+    orderInventoryId Int?
+
+    @@index([parentId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model InventoryProducts {
+    id                Int               @unique @default(autoincrement())
+    multiVariant      Boolean?
+    title             String            @db.VarChar(255)
+    description       String?           @db.Text
+    categoryId        Int?
+    subCategoryId     Int?
+    weight            Float?
+    meta              Json?             @db.Json
+    deletedAt         DateTime?         @db.Timestamp(0)
+    createdAt         DateTime?         @default(now()) @db.Timestamp(0)
+    updatedAt         DateTime?         @updatedAt
+    priceUpdateAt     String?           @db.VarChar(255)
+    type              String?           @db.VarChar(255)
+    slug              String            @db.VarChar(255)
+    sku               String?           @db.VarChar(255)
+    barcode           String?           @db.VarChar(255)
+    qty               Int?
+    price             Float?
+    minimumStockLevel Int?
+    img               String?           @db.VarChar(255)
+    status            String?           @db.VarChar(255)
+    category          String?           @db.VarChar(255)
+    subCategory       String?           @db.VarChar(255)
+    supplier          String?           @db.VarChar(255)
+    variants          ProductVariants[]
+}
+
+model Invoices {
+    id        Int       @unique @default(autoincrement())
+    projectId Int?
+    homeId    Int?
+    refNo     String?   @db.VarChar(255)
+    lot       String?   @db.VarChar(255)
+    block     String?   @db.VarChar(255)
+    taskId    Int?
+    checkNo   String?   @db.VarChar(255)
+    amount    Float?
+    taskName  String?   @db.VarChar(255)
+    meta      Json?     @db.Json
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+    taskUid   String?   @db.VarChar(255)
+    checkDate DateTime? @db.Timestamp(0)
+    project   Projects? @relation(fields: [projectId], references: [id])
+    home      Homes?    @relation(fields: [homeId], references: [id])
+
+    @@index([projectId])
+    @@index([homeId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Migrations {
+    id        Int    @unique @default(autoincrement())
+    migration String @db.VarChar(255)
+    batch     Int
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model ModelHasPermissions {
+    permissionId Int
+    modelType    String      @db.VarChar(255)
+    modelId      BigInt      @db.UnsignedBigInt
+    permissions  Permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "model_has_permissions_permission_id_foreign")
+    deletedAt    DateTime?   @db.Timestamp(0)
+    // @@index([createdAt,deletedAt,modelId, modelType], map: "model_has_permissions_model_id_model_type_index")
+
+    @@id([permissionId, modelId, modelType])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model ModelHasRoles {
+    roleId    Int
+    modelType String @db.VarChar(255)
+    modelId   Int
+
+    role      Roles     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "model_has_roles_role_id_foreign")
+    user      Users     @relation(fields: [modelId], references: [id])
+    deletedAt DateTime? @db.Timestamp(0)
+    // @@index([createdAt,deletedAt,modelId, modelType], map: "model_has_roles_model_id_model_type_index")
+
+    @@id([roleId, modelId, modelType])
+    @@index([modelId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model PasswordResets {
+    id        Int       @unique @default(autoincrement())
+    email     String    @db.VarChar(255)
+    token     String    @db.VarChar(255)
+    usedAt    DateTime? @db.Timestamp(0)
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Permissions {
+    id                    Int                   @unique @default(autoincrement())
+    name                  String                @db.VarChar(255)
+    createdAt             DateTime?             @default(now()) @db.Timestamp(0)
+    updatedAt             DateTime?             @updatedAt
+    deletedAt             DateTime?             @db.Timestamp(0)
+    model_has_permissions ModelHasPermissions[]
+    role_has_permissions  RoleHasPermissions[]
+
+    // @@unique([name], map: "permissions_name_guard_name_unique")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Posts {
+    id        Int       @unique @default(autoincrement())
+    title     String?   @db.VarChar(255)
+    slug      String?   @db.VarChar(255)
+    type      String    @db.VarChar(255)
+    content   String?   @db.Text
+    meta      Json?     @db.Json
+    status    String?   @db.VarChar(255)
+    parentId  Int?
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+}
+
+model Settings {
+    id        Int       @unique @default(autoincrement())
+    type      String    @db.VarChar(255)
+    meta      Json?     @db.Json
+    deletedAt DateTime? @db.Timestamp(0)
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt DateTime? @updatedAt
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model ProductCategories {
+    id         Int       @unique @default(autoincrement())
+    productId  Int
+    categoryId Int
+    createdAt  DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt  DateTime? @updatedAt
+    deletedAt  DateTime? @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Products {
+    id          Int       @unique @default(autoincrement())
+    slug        String    @db.VarChar(255)
+    section     String    @db.VarChar(255)
+    name        String    @db.VarChar(255)
+    description String    @db.VarChar(255)
+    size        String?   @db.VarChar(255)
+    type        String?   @db.VarChar(255)
+    box         String?   @db.VarChar(255)
+    price       Float
+    finish      String?   @db.VarChar(255)
+    length      String?   @db.VarChar(255)
+    per         String?   @db.VarChar(255)
+    unitQty     String?   @db.VarChar(255)
+    itemNumber  String?   @db.VarChar(255)
+    lastUpdate  String    @db.VarChar(255)
+    note        String?   @db.Text
+    priceType   String?   @db.VarChar(255)
+    meta        Json?     @db.Json
+    deletedAt   DateTime? @db.Timestamp(0)
+    createdAt   DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime? @updatedAt
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+// model ProductTags {
+//     id        Int       @unique @default(autoincrement())
+//     productId Int
+//     tagId     Int
+//     createdAt    DateTime?         @default(now())    @db.Timestamp(0)
+//     updatedAt DateTime? @updatedAt
+// }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model ProductVariants {
+    id                Int               @unique @default(autoincrement())
+    productId         Int
+    weight            Float?
+    price             Float?
+    description       String?           @db.VarChar(255)
+    meta              Json?             @db.Json
+    deletedAt         DateTime?         @db.Timestamp(0)
+    createdAt         DateTime?         @default(now()) @db.Timestamp(0)
+    updatedAt         DateTime?         @updatedAt
+    slug              String            @db.VarChar(255)
+    title             String?           @db.VarChar(255)
+    variantTitle      String?           @db.Text
+    sku               String?           @db.VarChar(255)
+    barcode           String?           @db.VarChar(255)
+    qty               Int?
+    minimumStockLevel Int?
+    img               String?           @db.VarChar(255)
+    status            String?           @db.VarChar(255)
+    category          String?           @db.VarChar(255)
+    subCategory       String?           @db.VarChar(255)
+    supplier          String?           @db.VarChar(255)
+    product           InventoryProducts @relation(fields: [productId], references: [id])
+
+    @@index([productId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+model Progress {
+    id               Int       @unique @default(autoincrement())
+    parentId         Int?
+    progressableId   Int?
+    progressableType String?   @db.VarChar(255)
+    userId           Int?
+    status           String?   @db.VarChar(255)
+    type             String?   @db.VarChar(255)
+    headline         String?   @db.VarChar(255)
+    description      String?   @db.Text
+    meta             Json?     @db.Json
+    deletedAt        DateTime? @db.Timestamp(0)
+    createdAt        DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime? @updatedAt
+    user             Users?    @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+}
+
+// model Note {
+//     id             Int        @unique @default(autoincrement())
+//     note           String?
+//     createdById    Int
+//     resolvedById   Int?
+//     visibility     String? //public,production,delivery,admin
+//     flagId         Int
+//     replyToNoteId  Int?
+//     deletedAt      DateTime?  @db.Timestamp(0)
+//     createdAt      DateTime?  @default(now()) @db.Timestamp(0)
+//     updatedAt      DateTime?  @updatedAt
+//     salesNote      SalesNote? @relation(name: "salesNote")
+//     replySalesNote SalesNote? @relation(name: "replySalesNote")
+//     flag           NoteFlags? @relation(fields: [flagId], references: [id])
+
+//     @@index([flagId])
+// }
+
+// model NoteFlags {
+//     id              Int       @unique @default(autoincrement())
+//     title           String
+//     color           String?
+//     resolveRequired Boolean?
+//     notes           Note[]
+//     deletedAt       DateTime? @db.Timestamp(0)
+//     createdAt       DateTime? @default(now()) @db.Timestamp(0)
+//     updatedAt       DateTime? @updatedAt
+// }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Projects {
+    id              Int               @unique @default(autoincrement())
+    archived        Boolean?
+    title           String?           @db.VarChar(255)
+    builderId       Int?
+    address         String?           @db.VarChar(255)
+    slug            String?           @unique @db.VarChar(255)
+    meta            Json?             @db.Json
+    refNo           String?           @db.VarChar(255)
+    deletedAt       DateTime?         @db.Timestamp(0)
+    createdAt       DateTime?         @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime?         @updatedAt
+    homes           Homes[]
+    builder         Builders?         @relation(fields: [builderId], references: [id])
+    jobs            Jobs[]
+    communityModels CommunityModels[]
+    invoices        Invoices[]
+    homeTasks       HomeTasks[]
+
+    @@index([builderId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model RoleHasPermissions {
+    permissionId Int
+    roleId       Int
+    permission   Permissions @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_permission_id_foreign")
+    role         Roles       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_role_id_foreign")
+    deletedAt    DateTime?   @db.Timestamp(0)
+
+    @@id([permissionId, roleId])
+    @@index([roleId], map: "role_has_permissions_role_id_foreign")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Roles {
+    id                 Int                  @unique @default(autoincrement())
+    name               String               @db.VarChar(255)
+    createdAt          DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt          DateTime?            @updatedAt
+    deletedAt          DateTime?            @db.Timestamp(0)
+    ModelHasRoles      ModelHasRoles[]
+    RoleHasPermissions RoleHasPermissions[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model SalesInvoiceItems {
+    id              Int       @unique @default(autoincrement())
+    uid             Int
+    productId       Int
+    salesInvoiceId  Int
+    item            String?   @db.VarChar(255)
+    description     String?   @db.VarChar(255)
+    qty             Int
+    salesPercentage Float?
+    costPrice       Float?
+    salesPrice      Float?
+    total           Float?
+    tax             Float?
+    meta            Json?     @db.Json
+    deletedAt       DateTime? @db.Timestamp(0)
+    createdAt       DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime? @updatedAt
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model SalesInvoices {
+    id              Int       @unique @default(autoincrement())
+    slug            String    @db.VarChar(255)
+    invoiceNumber   String    @db.VarChar(255)
+    customerName    String?   @db.VarChar(255)
+    sumTax          Float?
+    subTotal        Float?
+    total           Float
+    salesPercentage Float?
+    taxPercentage   Float?
+    meta            Json?     @db.Json
+    deletedAt       DateTime? @db.Timestamp(0)
+    createdAt       DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt       DateTime? @updatedAt
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model SalesJobs {
+    id           Int       @unique @default(autoincrement())
+    jobId        String?   @db.VarChar(255)
+    salesOrderId Int
+    meta         Json?     @db.Json
+    status       String    @db.VarChar(255)
+    createdAt    DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt    DateTime? @updatedAt
+    deletedAt    DateTime? @db.Timestamp(0)
+}
+
+model DykeSalesShelfItem {
+    id               Int                  @unique @default(autoincrement())
+    salesOrderItemId Int?
+    description      String?
+    productId        Int?
+    categoryId       Int
+    qty              Int?
+    unitPrice        Int?
+    totalPrice       Int?
+    meta             Json?                @db.Json
+    createdAt        DateTime?            @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime?            @updatedAt
+    deletedAt        DateTime?            @db.Timestamp(0)
+    salesOrderItem   SalesOrderItems?     @relation(fields: [salesOrderItemId], references: [id])
+    shelfProduct     DykeShelfProducts?   @relation(fields: [productId], references: [id])
+    category         DykeShelfCategories? @relation(fields: [categoryId], references: [id])
+
+    @@index([salesOrderItemId])
+    @@index([productId])
+    @@index([categoryId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model SalesOrderProducts {
+    id               Int       @unique @default(autoincrement())
+    salesOrderId     Int
+    salesOrderItemId Int
+    qty              Int?
+    stockQty         Int?
+    shortQty         Int?
+    productVariantId Int?
+    productId        Int?
+    status           String    @db.VarChar(255)
+    deletedAt        DateTime? @db.Timestamp(0)
+    createdAt        DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt        DateTime? @updatedAt
+}
+
+model SalesCommision {
+    id                  Int                @unique @default(autoincrement())
+    amount              Float
+    userId              Int
+    orderId             Int
+    orderPaymentId      Int
+    commissionPaymentId Int?
+    status              String             @db.VarChar(255)
+    deletedAt           DateTime?          @db.Timestamp(0)
+    createdAt           DateTime?          @default(now()) @db.Timestamp(0)
+    updatedAt           DateTime?          @updatedAt
+    order               SalesOrders        @relation(fields: [orderId], references: [id])
+    user                Users              @relation(fields: [userId], references: [id])
+    orderPayment        SalesPayments      @relation(fields: [orderPaymentId], references: [id])
+    commissionPayment   CommissionPayment? @relation(fields: [commissionPaymentId], references: [id])
+
+    @@index([orderId])
+    @@index([userId])
+    @@index([orderPaymentId])
+    @@index([commissionPaymentId])
+}
+
+model CommissionPayment {
+    id            Int              @unique @default(autoincrement())
+    amount        Float
+    userId        Int
+    paidBy        Int
+    checkNo       String?
+    paymentMethod String?
+    meta          Json?            @db.Json
+    deletedAt     DateTime?        @db.Timestamp(0)
+    createdAt     DateTime?        @default(now()) @db.Timestamp(0)
+    updatedAt     DateTime?        @updatedAt
+    commissions   SalesCommision[]
+    user          Users?           @relation(name: "worker", fields: [userId], references: [id])
+    payer         Users?           @relation(name: "payer", fields: [paidBy], references: [id])
+    Users         Users?           @relation(fields: [usersId], references: [id])
+    usersId       Int?
+
+    @@index([userId])
+    @@index([paidBy])
+    @@index([usersId])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model Jobs {
+    id          Int       @unique @default(autoincrement())
+    userId      Int
+    coWorkerId  Int?
+    type        String    @db.VarChar(255)
+    homeId      Int?
+    // unitId      Int?
+    projectId   Int?
+    // taskId      Int?
+    amount      Float
+    title       String?   @db.VarChar(255)
+    subtitle    String?   @db.VarChar(255)
+    description String?   @db.LongText
+    note        String?   @db.Text
+    // doneBy      String?      @db.VarChar(255)
+    status      String    @db.VarChar(255)
+    meta        Json?     @db.Json
+    adminNote   String?   @db.Text
+    statusDate  DateTime? @db.Timestamp(0)
+    rejectedAt  DateTime? @db.Timestamp(0)
+    approvedAt  DateTime? @db.Timestamp(0)
+    // paidAt      DateTime?    @db.Timestamp(0)
+    approvedBy  Int?
+    // paidBy      Int?
+    paymentId   Int?
+
+    // checkNo     String?      @db.VarChar(255)
+    deletedAt DateTime?    @db.Timestamp(0)
+    createdAt DateTime?    @default(now()) @db.Timestamp(0)
+    updatedAt DateTime?    @updatedAt
+    payment   JobPayments? @relation(fields: [paymentId], references: [id])
+    home      Homes?       @relation(fields: [homeId], references: [id])
+    user      Users?       @relation(name: "installer", fields: [userId], references: [id])
+    coWorker  Users?       @relation(name: "co-worker", fields: [coWorkerId], references: [id])
+    project   Projects?    @relation(fields: [projectId], references: [id])
+    homeTasks HomeTasks[]
+
+    @@index([createdAt, homeId, type, status, userId])
+    @@index([paymentId])
+    @@index([homeId])
+    @@index([userId])
+    @@index([coWorkerId])
+    @@index([projectId])
+}
+
+model JobPayments {
+    id            Int       @unique @default(autoincrement())
+    amount        Int
+    charges       Int?
+    subTotal      Int?
+    userId        Int
+    paidBy        Int
+    checkNo       String?
+    paymentMethod String?
+    meta          Json?     @db.Json
+    createdAt     DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt     DateTime? @updatedAt
+    deletedAt     DateTime? @db.Timestamp(0)
+    jobs          Jobs[]
+    user          Users?    @relation(name: "worker", fields: [userId], references: [id])
+    payer         Users?    @relation(name: "payer", fields: [paidBy], references: [id])
+
+    @@index([userId])
+    @@index([paidBy])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+// model Variants {
+//     id        Int       @unique @default(autoincrement())
+//     name      String    @db.VarChar(255)
+//     value     String    @db.VarChar(255)
+//     meta      Json?     @db.Json
+//     deletedAt DateTime? @db.Timestamp(0)
+//     createdAt    DateTime?         @default(now())    @db.Timestamp(0)
+//     updatedAt DateTime? @updatedAt
+// }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model WorkOrders {
+    id           Int       @unique @default(autoincrement())
+    techId       Int?
+    slug         String    @unique @db.VarChar(255)
+    description  String?   @db.Text
+    lot          String?   @db.VarChar(255)
+    block        String?   @db.VarChar(255)
+    projectName  String?   @db.VarChar(255)
+    builderName  String?   @db.VarChar(255)
+    requestDate  DateTime?
+    supervisor   String?   @db.VarChar(255)
+    scheduleDate DateTime? @db.Timestamp(0)
+    scheduleTime String?   @db.VarChar(255)
+    homeAddress  String?   @db.VarChar(255)
+    homeOwner    String?   @db.VarChar(255)
+    homePhone    String?   @db.VarChar(255)
+    meta         Json?     @db.Json
+    status       String?   @db.VarChar(255)
+    assignedAt   DateTime? @db.Timestamp(0)
+    completedAt  DateTime  @default(now()) @db.Timestamp(0)
+    deletedAt    DateTime? @db.Timestamp(0)
+    createdAt    DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt    DateTime? @updatedAt
+    tech         Users?    @relation(fields: [techId], references: [id])
+
+    @@index([techId])
+}
+
+model Notifications {
+    id          Int       @unique @default(autoincrement())
+    meta        Json?     @db.Json
+    type        String
+    fromUserId  Int
+    userId      Int
+    message     String
+    alert       Boolean?
+    deliveredAt Boolean?
+    link        String?   @db.Text()
+    user        Users     @relation(name: "notifications", fields: [userId], references: [id])
+    fromUser    Users     @relation(name: "fromUser", fields: [fromUserId], references: [id])
+    seenAt      DateTime? @db.Timestamp(0)
+    archivedAt  DateTime? @db.Timestamp(0)
+    createdAt   DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime? @updatedAt
+    deletedAt   DateTime?
+
+    @@index([createdAt, deletedAt, userId, seenAt, archivedAt])
+    @@index([userId])
+    @@index([fromUserId])
+}
+
+// Dyke Edge Db
+
+model Cache {
+    id        Int       @unique @default(autoincrement())
+    path      String?
+    name      String
+    group     String?
+    meta      Json?     @db.Json
+    createdAt DateTime? @default(now()) @db.Timestamp(0)
+    deletedAt DateTime? @db.Timestamp(0)
+}
+
+// model Payday {
+//     id        Int            @unique @default(autoincrement())
+//     invoiceId Int?
+//     startedAt DateTime?      @db.Timestamp(0)
+//     endTime   DateTime?      @db.Timestamp(0)
+//     createdAt DateTime?      @default(now()) @db.Timestamp(0)
+//     updatedAt DateTime?      @updatedAt
+//     deletedAt DateTime?      @db.Timestamp(0)
+//     invoice   PaydayInvoice? @relation(fields: [invoiceId], references: [id])
+
+//     @@index([invoiceId])
+// }
+
+// model PaydayInvoice {
+//     id        Int       @unique @default(autoincrement())
+//     payments  Payday[]
+//     createdAt DateTime? @default(now()) @db.Timestamp(0)
+//     deletedAt DateTime? @db.Timestamp(0)
+//     updatedAt DateTime? @updatedAt
+// }
+
+model Blogs {
+    id          Int       @unique @default(autoincrement())
+    title       String
+    slug        String    @unique
+    authorId    Int
+    type        String
+    content     String    @db.LongText
+    meta        Json      @db.Json
+    status      String    @default("draft")
+    publishedAt DateTime? @db.Timestamp(0)
+    createdAt   DateTime? @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime? @updatedAt
+    deletedAt   DateTime? @db.Timestamp(0)
+    user        Users?    @relation(fields: [authorId], references: [id])
+
+    @@index([authorId])
+}
+
+model Gallery {
+    id          Int          @unique @default(autoincrement())
+    description String?
+    src         String       @unique
+    tags        GalleryTag[]
+    createdAt   DateTime?    @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime?    @updatedAt
+    deletedAt   DateTime?    @db.Timestamp(0)
+}
+
+model GalleryTag {
+    id        Int             @unique @default(autoincrement())
+    galleryId Int
+    tagId     Int
+    tag       GalleryTagName? @relation(fields: [tagId], references: [id])
+    gallery   Gallery?        @relation(fields: [galleryId], references: [id])
+    createdAt DateTime?       @default(now()) @db.Timestamp(0)
+    updatedAt DateTime?       @updatedAt
+    deletedAt DateTime?       @db.Timestamp(0)
+
+    @@index([tagId])
+    @@index([galleryId])
+}
+
+model GalleryTagName {
+    id          Int          @unique @default(autoincrement())
+    title       String       @unique
+    galleryTags GalleryTag[]
+    createdAt   DateTime?    @default(now()) @db.Timestamp(0)
+    updatedAt   DateTime?    @updatedAt
+    deletedAt   DateTime?    @db.Timestamp(0)
+}

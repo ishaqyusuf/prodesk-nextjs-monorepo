@@ -1,0 +1,27 @@
+ARCHITECTURE:
+
++app
+    page.tsx
+    layout.tsx
+    +api
+        +auth
+            [...nextauth]
+    +(auth)
+    +(loggedin)
+        +community
+            +_misc
+                _components
+                _modals
+                _utils
+                _actions
+            layout.tsx
+            +projects
+                _misc
+                    _actions
+                    _components
+                    
+                loading.tsx
+                page.tsx
++components
++lib
+    +store

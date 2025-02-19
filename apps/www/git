@@ -1,0 +1,29 @@
+git status
+git checkout -b my_new_feature
+git branches
+git push origin my_new_feature
+git add main.c
+git commit -m "comment"
+git log
+git push origin my_new_feature
+create pull request
+
+git checkout main
+git status
+git checkout -b your_new_feature
+git push origin your_new_feature
+
+git checkout main
+git pull
+log
+
+git status
+
+git checkout your_new_feature
+gitt merge main
+
+
+git add main.c
+git commit
+git push origin your_new_feature
+
