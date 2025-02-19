@@ -33,7 +33,7 @@ function OrderDispatch({ item, href }: SalesCellProps & { href? }) {
             <TableCell.Medium
                 className={cn(
                     item.isDyke ? "font-bold" : "",
-                    "whitespace-nowrap"
+                    "whitespace-nowrap",
                 )}
             >
                 {item.orderId}
@@ -83,7 +83,7 @@ function SalesRep({ item }: SalesCellProps) {
             <TableCell.Secondary
                 className={cn(
                     !item?.salesRep?.name && "text-red-500",
-                    "w-16 truncate"
+                    "w-16 truncate",
                 )}
             >
                 {item?.salesRep?.name || item?.customer?.businessName}
@@ -147,7 +147,7 @@ function Dispatch({ item }: SalesCellProps) {
             await updateDeliveryModeDac(
                 item.id,
                 delivery,
-                item.type == "order" ? "orders" : "quotes"
+                item.type == "order" ? "orders" : "quotes",
             );
 
             toast.success("Updated");
@@ -167,7 +167,7 @@ function Dispatch({ item }: SalesCellProps) {
                 {salesData.delivery.map((o) => (
                     <MenuItem
                         onClick={() => updateDeliveryMode(o.value)}
-                        key={o}
+                        key={o.value}
                     >
                         {o.text}
                     </MenuItem>
@@ -272,8 +272,8 @@ function SalesStatus({ item }: SalesCellProps) {
 function ProductionStatus({ item }: SalesCellProps) {
     const submitted = sum(
         item.assignments.map((a) =>
-            sum(a.submissions.map((s) => sum([s.lhQty, s.rhQty])))
-        )
+            sum(a.submissions.map((s) => sum([s.lhQty, s.rhQty]))),
+        ),
     );
     // item.assignments[0].
     const totalDoors = item._meta.totalDoors;

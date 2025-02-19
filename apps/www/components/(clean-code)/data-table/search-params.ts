@@ -13,6 +13,7 @@ import { ARRAY_DELIMITER, SORT_DELIMITER } from "@/lib/delimiters";
 import { z } from "zod";
 import {
     DISPATCH_FILTER_OPTIONS,
+    INVOICE_FILTER_OPTIONS,
     PRODUCTION_STATUS,
 } from "@/app/(clean-code)/(sales)/_common/utils/contants";
 import { PERMISSIONS } from "@/data/contants/permissions";
@@ -90,7 +91,7 @@ export const searchParamsParser: {
     id: parseAsInteger,
     "user.permissions": parseAsArrayOf(
         parseAsStringLiteral(PERMISSIONS),
-        ARRAY_DELIMITER
+        ARRAY_DELIMITER,
     ),
     ...noteParamsParser,
 };
@@ -108,7 +109,8 @@ export const searchSchema = z
         "production.assignment": z.string().optional(),
         "production.assignedToId": z.number().optional(),
         production: z.string().optional(),
-        invoice: z.string().optional(),
+        // invoice: z.string().optional(),
+        invoice: z.enum(INVOICE_FILTER_OPTIONS).optional(),
         "sales.rep": z.string().optional(),
         search: z.string().optional(),
         "sales.type": z.enum(["order", "quote"]).optional(),

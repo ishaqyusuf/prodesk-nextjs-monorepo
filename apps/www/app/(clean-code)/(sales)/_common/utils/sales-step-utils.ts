@@ -9,7 +9,7 @@ import { LoadSalesFormData } from "../data-access/sales-form-settings.dta";
 
 export function composeStepRouting(fdata: LoadSalesFormData) {
     const sectionKeys = Object.keys(fdata.setting?.data?.route || [])?.map(
-        (uid) => ({ uid })
+        (uid) => ({ uid }),
     );
     const stepsByKey: {
         [uid in string]: {
@@ -34,7 +34,7 @@ export function composeStepRouting(fdata: LoadSalesFormData) {
     fdata.rootStep.stepProducts.map((s) => {
         rootComponentsByKey[s.uid] = {
             uid: s.uid,
-            title: s.product.title,
+            title: s.product?.title,
             stepUid: fdata.rootStep.uid,
         };
     });
