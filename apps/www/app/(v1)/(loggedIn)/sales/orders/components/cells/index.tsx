@@ -134,7 +134,7 @@ function Dispatch({ item }: Props) {
             await updateDeliveryModeDac(
                 item.id,
                 delivery,
-                item.type == "order" ? "orders" : "quotes"
+                item.type == "order" ? "orders" : "quotes",
             );
 
             toast.success("Updated");
@@ -154,7 +154,7 @@ function Dispatch({ item }: Props) {
                 {salesData.delivery.map((o) => (
                     <MenuItem
                         onClick={() => updateDeliveryMode(o.value)}
-                        key={o}
+                        key={o.value}
                     >
                         {o.text}
                     </MenuItem>

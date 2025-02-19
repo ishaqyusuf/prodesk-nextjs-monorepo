@@ -12,7 +12,7 @@ export function PrintMenuAction({ pdf }: Props) {
     let ctx = salesOverviewStore();
 
     // const dispatchList = ctx.item.dispatchList || [];
-    const type = ctx.overview.type;
+    const type = ctx.overview?.type;
     function print(params?: SalesPrintProps["searchParams"]) {
         const query = {
             slugs: ctx.overview?.orderId,
@@ -39,7 +39,7 @@ export function PrintMenuAction({ pdf }: Props) {
                     error(data) {
                         return "Something went wrong";
                     },
-                }
+                },
             );
         }
     }

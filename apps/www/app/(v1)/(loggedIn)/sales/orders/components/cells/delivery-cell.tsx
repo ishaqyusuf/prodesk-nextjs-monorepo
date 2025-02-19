@@ -28,7 +28,7 @@ export default function DeliveryCell({ item }: any) {
             await updateDeliveryModeDac(
                 item.id,
                 delivery,
-                item.type == "order" ? "orders" : "quotes"
+                item.type == "order" ? "orders" : "quotes",
             );
 
             toast.success("Updated");
@@ -45,7 +45,10 @@ export default function DeliveryCell({ item }: any) {
             }
         >
             {salesData.delivery.map((o) => (
-                <MenuItem onClick={() => updateDeliveryMode(o.value)} key={o}>
+                <MenuItem
+                    onClick={() => updateDeliveryMode(o.value)}
+                    key={o.value}
+                >
                     {o.text}
                 </MenuItem>
             ))}
